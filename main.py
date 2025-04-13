@@ -49,11 +49,11 @@ def main():
 
     # Exportar a CSV
     print("Exportacion de Horario final a CSV: mejor_horario.csv")
-    exportar_horario_csv("mejor_horario.csv", poblacion.mejor_individuo, cursos)
+    exportar_horario_csv("exports/csv/mejor_horario.csv", poblacion.mejor_individuo, cursos)
     
     # Exportar a PDF
     print("Exportacion de Horario final a PDF: mejor_horario.pdf")
-    exportar_horario_pdf("mejor_horario.pdf", poblacion.mejor_individuo, cursos)
+    exportar_horario_pdf("exports/pdf/mejor_horario.pdf", poblacion.mejor_individuo, cursos)
 
 if __name__ == "__main__":
     main()
