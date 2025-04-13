@@ -1,0 +1,74 @@
+# Entornos virtuales
+.env/
+.venv/
+horarios_env/
+ENV/
+env/
+venv/
+
+# Archivos de Python compilados
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Archivos de logs y temporales
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Archivos de salida
+*.csv
+*.pdf
+
+# Archivos y carpetas de dist
+build/
+dist/
+*.egg-info/
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# Archivos de configuración específicos
+*.ini
+*.cfg
+*.cover
+*.db
+
+# Archivos de dependencias
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Archivos de test o debug
+htmlcov/
+.tox/
+.coverage
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Archivos de ejecución en sistemas Unix o Mac
+.DS_Store
+*.sublime-workspace
+
+# Archivos relacionados a GUI y logs de ejecución
+qt_temp/
+qt_logs/
+
+# Archivos exportados o generados automáticamente por el sistema
+/export/
+output/
+reports/
+screenshots/
+
+# Evita subir bases de datos locales (si se usan)
+*.sqlite3
+
+# Archivos personalizados del usuario
+estructura_proyecto.txt

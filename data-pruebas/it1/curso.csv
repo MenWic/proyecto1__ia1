@@ -1,0 +1,11 @@
+codigo,nombre,carrera,semestre,seccion,tipo
+C001,Curso 1,Ingeniería,1,A,obligatorio
+C002,Curso 2,Ingeniería,2,B,obligatorio
+C003,Curso 3,Ingeniería,3,A,obligatorio
+C004,Curso 4,Ingeniería,4,B,obligatorio
+C005,Curso 5,Ingeniería,5,A,obligatorio
+C006,Curso 6,Ingeniería,1,B,optativo
+C007,Curso 7,Ingeniería,2,A,optativo
+C008,Curso 8,Ingeniería,3,B,optativo
+C009,Curso 9,Ingeniería,4,A,optativo
+C010,Curso 10,Ingeniería,5,B,optativo
