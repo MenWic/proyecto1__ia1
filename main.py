@@ -11,6 +11,8 @@ from utils.exportador_pdf import exportar_horario_pdf
 
 from poblacion import Poblacion
 
+from utils.grafica_aptitud import graficar_aptitudes
+
 # Lista de horarios posibles en bloques de 50 minutos
 HORARIOS_DISPONIBLES = [
     "13:40", "14:30", "15:20", "16:10", "17:00",
@@ -45,15 +47,17 @@ def main():
     for codigo, (salon, horario, docente) in poblacion.mejor_individuo.asignaciones.items():
         print(f"Curso {codigo} → Salón: {salon.nombre}, Hora: {horario}, Docente: {docente.nombre if docente else 'No asignado'}")
 
+    # Mejor Horario
     print("\n=> Exportaciones del Mejor Horario final")
-
-    # Exportar a CSV
-    print("Exportacion de Horario final a CSV: mejor_horario.csv")
+    # Exportar CSV
     exportar_horario_csv("exports/csv/mejor_horario.csv", poblacion.mejor_individuo, cursos)
-    
-    # Exportar a PDF
-    print("Exportacion de Horario final a PDF: mejor_horario.pdf")
+    # Exportar PDF
     exportar_horario_pdf("exports/pdf/mejor_horario.pdf", poblacion.mejor_individuo, cursos)
+    
+    # Evolucion de Aptitud
+    print("\n=> Exportación de Grafica de Aptitud final")
+    # Exportar PNG
+    graficar_aptitudes("exports/graficas/evolucion_aptitud.png", poblacion.mejores_aptitudes)
 
 if __name__ == "__main__":
     main()

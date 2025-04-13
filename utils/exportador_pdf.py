@@ -54,4 +54,4 @@ def exportar_horario_pdf(nombre_archivo: str, individuo: Individuo, cursos: list
     elements.append(table)
     doc.build(elements)
 
-    print(f"Horario exportado exitosamente a PDF: {nombre_archivo}")
+    print(f"Horario exportado exitosamente como PDF: {nombre_archivo}")

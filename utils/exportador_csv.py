@@ -26,5 +26,5 @@ def exportar_horario_csv(nombre_archivo: str, individuo: Individuo, cursos: list
                 docente.nombre if docente else "No asignado"
             ])
             
-    print(f"Horario exportado exitosamente a CSV: {nombre_archivo}")
+    print(f"Horario exportado exitosamente como CSV: {nombre_archivo}")
 

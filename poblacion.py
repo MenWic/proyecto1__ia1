@@ -10,7 +10,7 @@ class Poblacion:
         self.docentes = docentes
         self.relacion_docente_curso = relacion_docente_curso
         self.horarios_disponibles = horarios_disponibles
-
+        self.mejores_aptitudes: list[float] = []
         self.individuos: list[Individuo] = [
             Individuo(cursos, salones, docentes, relacion_docente_curso, horarios_disponibles)
             for _ in range(size)
@@ -63,6 +63,8 @@ class Poblacion:
                 self.sin_mejora_consecutiva = 0
             else:
                 self.sin_mejora_consecutiva += 1
+                self.mejores_aptitudes.append(self.mejor_individuo.aptitud)
+
 
     def cruzar(self, padre1: Individuo, padre2: Individuo) -> Individuo:
         hijo = Individuo(self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles)
