@@ -9,7 +9,7 @@ from poblacion import Poblacion
 from time import time
 import tracemalloc
 
-def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones, poblacion_size=10, generaciones_max=250, aptitud_objetivo=125, modo=1):
+def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones, poblacion_size=10, generaciones_max=250, aptitud_objetivo=125, modo=1, restricciones: dict[str, str] = None):
     logs = []
     cursos = cargar_cursos(path_cursos)
     docentes = cargar_docentes(path_docentes)
@@ -24,7 +24,8 @@ def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones, 
         docentes=docentes,
         relacion_docente_curso=relacion,
         horarios_disponibles=horarios,
-        imprimir_diagnostico=False
+        imprimir_diagnostico=False,
+        asignaciones_fijas=restricciones or {}
     )
 
     logs.append("[INFO] Población inicializada.")

@@ -5,28 +5,112 @@ from modelos.salon import Salon
 import random
 from collections import defaultdict
 
+#class Individuo:
+    # def __init__(self, cursos: list[Curso], salones: list[Salon], docentes: list[Docente], relacion_docente_curso: dict[str, list[str]], horarios_disponibles: list[str], imprimir_diagnostico: bool, asignaciones_fijas=None):
+    #     self.cursos = cursos
+    #     self.salones = salones
+    #     self.docentes = docentes
+    #     self.relacion_docente_curso = relacion_docente_curso
+    #     self.horarios_disponibles = horarios_disponibles
+    #     self.imprimir_diagnostico = imprimir_diagnostico
+    #     self.asignaciones_fijas = asignaciones_fijas or {}
+
+    #     self.asignaciones: dict[str, tuple[Salon, str, Docente]] = {}
+    #     self.aptitud: float = 0.0
+
+    #     self.generar_asignacion_prioritaria()
+        
+    #     # GUI
+    #     self.diagnostico_conflictos = {}
+    #     self.diagnostico_bonos = 0
+    
 class Individuo:
-    def __init__(self, cursos: list[Curso], salones: list[Salon], docentes: list[Docente], relacion_docente_curso: dict[str, list[str]], horarios_disponibles: list[str], imprimir_diagnostico: bool):
+    def __init__(self, cursos: list[Curso], salones: list[Salon], docentes: list[Docente], relacion_docente_curso: dict[str, list[str]], horarios_disponibles: list[str], imprimir_diagnostico: bool, asignaciones_fijas: dict[str, str] = None):
         self.cursos = cursos
         self.salones = salones
         self.docentes = docentes
         self.relacion_docente_curso = relacion_docente_curso
         self.horarios_disponibles = horarios_disponibles
         self.imprimir_diagnostico = imprimir_diagnostico
+        self.asignaciones_fijas = asignaciones_fijas or {}
 
         self.asignaciones: dict[str, tuple[Salon, str, Docente]] = {}
         self.aptitud: float = 0.0
 
         self.generar_asignacion_prioritaria()
-        
-        # GUI
+
         self.diagnostico_conflictos = {}
         self.diagnostico_bonos = 0
 
+    # def generar_asignacion_prioritaria(self):
+    #     ocupacion_docente = defaultdict(set)  # (registro_docente) -> set(horarios)
+    #     cursos_prioritarios = []
+
+    #     # Asignar los cursos fijos primero
+    #     for curso in self.cursos:
+    #         if curso.codigo in self.asignaciones_fijas:
+    #             salon_fijo = next((s for s in self.salones if s.nombre == self.asignaciones_fijas[curso.codigo]), None)
+    #             if salon_fijo:
+    #                 self.asignaciones[curso.codigo] = (salon_fijo, random.choice(self.horarios_disponibles), None)
+    #     #
+
+    #     for curso in self.cursos:
+    #         docentes_posibles = self.relacion_docente_curso.get(curso.codigo, [])
+    #         prioridad = len(docentes_posibles)
+    #         cursos_prioritarios.append((prioridad, curso.tipo, random.random(), curso))
+
+    #     cursos_ordenados = sorted(cursos_prioritarios, key=lambda x: (x[0], 0 if x[1] == "obligatorio" else 1, x[2]))
+
+    #     horarios_disponibles = list(self.horarios_disponibles)
+    #     random.shuffle(horarios_disponibles)
+
+    #     for _, _, _, curso in cursos_ordenados:
+    #         docentes_validos = [
+    #             d for d in self.docentes
+    #             if curso.codigo in self.relacion_docente_curso.get(d.registro, [])
+    #         ]
+
+    #         random.shuffle(docentes_validos)
+    #         horario_asignado = None
+    #         docente_asignado = None
+
+    #         for d in docentes_validos:
+    #             horarios_libres = [
+    #                 h for h in horarios_disponibles
+    #                 if d.hora_entrada.strftime("%H:%M") <= h <= d.hora_salida.strftime("%H:%M")
+    #                 and h not in ocupacion_docente[d.registro]
+    #             ]
+
+    #             if horarios_libres:
+    #                 horario_asignado = sorted(horarios_libres)[0]  # más temprano disponible
+    #                 docente_asignado = d
+    #                 ocupacion_docente[d.registro].add(horario_asignado)
+    #                 break
+
+    #         salon = random.choice(self.salones)
+    #         if docente_asignado and horario_asignado:
+    #             self.asignaciones[curso.codigo] = (salon, horario_asignado, docente_asignado)
+    #         else:
+    #             self.asignaciones[curso.codigo] = (salon, random.choice(self.horarios_disponibles), None)
+    
+    #
     def generar_asignacion_prioritaria(self):
+        from collections import defaultdict
         ocupacion_docente = defaultdict(set)  # (registro_docente) -> set(horarios)
         cursos_prioritarios = []
 
+        # Asignar los cursos fijos primero (salón fijo si se define en las restricciones)
+        for curso in self.cursos:
+            if curso.codigo in self.asignaciones_fijas:
+                salon_fijo = next((s for s in self.salones if s.nombre == self.asignaciones_fijas[curso.codigo]), None)
+                if salon_fijo:
+                    # Asignación fija de salón, pero dejamos el horario y docente a definir
+                    self.asignaciones[curso.codigo] = (salon_fijo, random.choice(self.horarios_disponibles), None)
+                else:
+                    # Si no se encuentra el salón fijo, asignamos aleatoriamente
+                    self.asignaciones[curso.codigo] = (random.choice(self.salones), random.choice(self.horarios_disponibles), None)
+
+        # Procesamos los cursos restantes
         for curso in self.cursos:
             docentes_posibles = self.relacion_docente_curso.get(curso.codigo, [])
             prioridad = len(docentes_posibles)
@@ -37,7 +121,16 @@ class Individuo:
         horarios_disponibles = list(self.horarios_disponibles)
         random.shuffle(horarios_disponibles)
 
+        # Asignamos los cursos restantes
         for _, _, _, curso in cursos_ordenados:
+            # Verificar si tiene una asignación fija de salón
+            salon_fijo = None
+            if curso.codigo in self.asignaciones_fijas:
+                salon_nombre_fijo = self.asignaciones_fijas[curso.codigo]
+                salon_fijo = next((s for s in self.salones if s.nombre == salon_nombre_fijo), None)
+            else:
+                salon_fijo = random.choice(self.salones)
+
             docentes_validos = [
                 d for d in self.docentes
                 if curso.codigo in self.relacion_docente_curso.get(d.registro, [])
@@ -47,6 +140,7 @@ class Individuo:
             horario_asignado = None
             docente_asignado = None
 
+            # Buscar docente y horario disponibles
             for d in docentes_validos:
                 horarios_libres = [
                     h for h in horarios_disponibles
@@ -55,16 +149,20 @@ class Individuo:
                 ]
 
                 if horarios_libres:
-                    horario_asignado = sorted(horarios_libres)[0]  # más temprano disponible
+                    horario_asignado = sorted(horarios_libres)[0]  # Asignamos el horario más temprano disponible
                     docente_asignado = d
                     ocupacion_docente[d.registro].add(horario_asignado)
                     break
 
-            salon = random.choice(self.salones)
+            # Si se encontró docente y horario, asignamos el curso
             if docente_asignado and horario_asignado:
-                self.asignaciones[curso.codigo] = (salon, horario_asignado, docente_asignado)
+                self.asignaciones[curso.codigo] = (salon_fijo, horario_asignado, docente_asignado)
             else:
-                self.asignaciones[curso.codigo] = (salon, random.choice(self.horarios_disponibles), None)
+                # Si no se encontró, asignamos un salón y horario aleatorio
+                self.asignaciones[curso.codigo] = (salon_fijo, random.choice(self.horarios_disponibles), None)
+
+    
+    #
 
     def calcular_aptitud(self):
         conflictos = 0
@@ -145,6 +243,8 @@ class Individuo:
                 print(f"- Conflictos {k.replace('_', ' ')}: {v}")
             print(f"- Bonificaciones por continuidad: {bonificaciones}")
             print(f"- Aptitud final: {self.aptitud}")
+        
+
         
 
     def calcular_conflictos(self) -> int:

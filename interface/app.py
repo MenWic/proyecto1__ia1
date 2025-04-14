@@ -2,6 +2,7 @@ import os
 import sys
 import csv
 import webbrowser
+import pandas as pd
 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel,
@@ -15,6 +16,8 @@ from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 from interface.runner import ejecutar_algoritmo
+from modelos.curso import Curso
+from modelos.salon import Salon
 
 class MainApp(QWidget):
     def __init__(self):
@@ -30,6 +33,13 @@ class MainApp(QWidget):
         self.csv_tab = QWidget()
         self.csv_tab.setLayout(self.init_csv_tab())
         self.tabs.addTab(self.csv_tab, "Cargar CSV")
+        
+        self.data_tab = QWidget()
+        self.data_tab_layout = QVBoxLayout()
+        self.data_tab.setLayout(self.data_tab_layout)
+        self.tabs.addTab(self.data_tab, "Datos")
+
+        
 
         self.config_tab = QWidget()
         self.config_tab.setLayout(self.init_config_tab())
@@ -52,7 +62,7 @@ class MainApp(QWidget):
         self.auto_set_csv_defaults()
 
     def init_csv_tab(self):
-        layout = QFormLayout()  # más compacto y limpio
+        layout = QFormLayout()
         self.csv_labels = {}
 
         for label in ["Cursos", "Docentes", "Relación Docente-Curso", "Salones"]:
@@ -60,10 +70,10 @@ class MainApp(QWidget):
 
             le = QLineEdit()
             le.setReadOnly(True)
-            le.setMaximumWidth(500)  # limite para que no se desborde
+            le.setMaximumWidth(500)
 
             b = QPushButton("Seleccionar")
-            b.setMaximumWidth(100)  # botón más compacto
+            b.setMaximumWidth(100)
             b.clicked.connect(lambda _, key=label, line=le: self.load_csv(key, line))
 
             container.addWidget(le)
@@ -71,13 +81,99 @@ class MainApp(QWidget):
             layout.addRow(QLabel(label + ":"), container)
 
             self.csv_labels[label] = le
+            
+        # Botón para cargar y mostrar datos
+        load_btn = QPushButton("Cargar datos")
+        load_btn.clicked.connect(self.actualizar_pestania_datos)
+        layout.addRow(load_btn)
+
 
         return layout
+    
+    # Nuevo
+    def init_data_tab(self):
+        layout = QVBoxLayout()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        container = QWidget()
+        container_layout = QVBoxLayout()
+
+        csv_files = {
+            "Cursos": self.csv_labels["Cursos"].text(),
+            "Docentes": self.csv_labels["Docentes"].text(),
+            "Relación Docente-Curso": self.csv_labels["Relación Docente-Curso"].text(),
+            "Salones": self.csv_labels["Salones"].text()
+        }
+
+        for titulo, path in csv_files.items():
+            if not os.path.exists(path):
+                continue
+
+            df = pd.read_csv(path)
+
+            label = QLabel(f"{titulo}")
+            label.setStyleSheet("font-weight: bold; padding: 6px 0;")
+            table = QTableWidget()
+            table.setRowCount(len(df))
+            table.setColumnCount(len(df.columns))
+            table.setHorizontalHeaderLabels(df.columns)
+
+            for row_idx, row in df.iterrows():
+                for col_idx, val in enumerate(row):
+                    table.setItem(row_idx, col_idx, QTableWidgetItem(str(val)))
+
+            container_layout.addWidget(label)
+            container_layout.addWidget(table)
+
+        container.setLayout(container_layout)
+        scroll.setWidget(container)
+        layout.addWidget(scroll)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        return widget
+    
+    def actualizar_pestania_datos(self):
+        # Limpiar layout actual
+        for i in reversed(range(self.data_tab_layout.count())):
+            widget = self.data_tab_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+
+        csv_files = {
+            "Cursos": self.csv_labels["Cursos"].text(),
+            "Docentes": self.csv_labels["Docentes"].text(),
+            "Relación Docente-Curso": self.csv_labels["Relación Docente-Curso"].text(),
+            "Salones": self.csv_labels["Salones"].text()
+        }
+
+        for titulo, path in csv_files.items():
+            if not os.path.exists(path):
+                continue
+
+            df = pd.read_csv(path)
+
+            label = QLabel(titulo)
+            label.setStyleSheet("font-weight: bold; padding: 6px 0;")
+            table = QTableWidget()
+            table.setRowCount(len(df))
+            table.setColumnCount(len(df.columns))
+            table.setHorizontalHeaderLabels(df.columns)
+            table.setEditTriggers(QTableWidget.AllEditTriggers)  # permite edición si quieres
+
+            for row_idx, row in df.iterrows():
+                for col_idx, val in enumerate(row):
+                    table.setItem(row_idx, col_idx, QTableWidgetItem(str(val)))
+
+            self.data_tab_layout.addWidget(label)
+            self.data_tab_layout.addWidget(table)
+
 
     def load_csv(self, label, line_edit):
         file_path, _ = QFileDialog.getOpenFileName(self, f"Seleccionar archivo CSV de {label}", "", "CSV Files (*.csv)")
         if file_path:
             line_edit.setText(file_path)
+        self.data_tab.setLayout(self.init_data_tab().layout())  # Refrescar el contenido
     
     def init_config_tab(self):
         layout = QVBoxLayout()
@@ -98,16 +194,6 @@ class MainApp(QWidget):
         self.fitness_input = QLineEdit("125")
         self.fitness_input.setMaximumWidth(100)
         form_layout.addRow("Aptitud objetivo:", self.fitness_input)
-
-        # self.start_button = QPushButton("Ejecutar Algoritmo")
-        # self.start_button.setMaximumWidth(150)
-        # self.start_button.clicked.connect(self.run_algorithm)
-
-        # # Botón alineado a la izquierda con un poco de margen
-        # button_row = QHBoxLayout()
-        # button_row.setContentsMargins(130, 15, 0, 0)  # margen izquierdo y arriba
-        # button_row.setAlignment(Qt.AlignLeft)
-        # button_row.addWidget(self.start_button)
         
         # Radio buttons para elegir modo
         self.option_group = QButtonGroup()
@@ -116,7 +202,7 @@ class MainApp(QWidget):
         radio_layout = QVBoxLayout()
 
         self.option1 = QRadioButton("1. Aptitud objetivo (default)")
-        self.option1.setChecked(True)  # opción por defecto
+        self.option1.setChecked(True)  # Opción por defecto
         self.option2 = QRadioButton("2. Número máximo de generaciones definida (A menos que alcance antes la aptitud objetivo)")
         self.option3 = QRadioButton("3. Nivel de aptitud definido (Siempre que no sobrepase max. de generaciones)")
 
@@ -131,7 +217,7 @@ class MainApp(QWidget):
         radio_box.setLayout(radio_layout)
         layout.addWidget(radio_box)
 
-        # Botón
+        # Botón de Ejecutar
         self.start_button = QPushButton("Ejecutar Algoritmo")
         self.start_button.setMaximumWidth(150)
         self.start_button.clicked.connect(self.run_algorithm)
@@ -141,10 +227,64 @@ class MainApp(QWidget):
         button_row.setAlignment(Qt.AlignLeft)
         button_row.addWidget(self.start_button)
 
-
         layout.addLayout(form_layout)
         layout.addLayout(button_row)
         layout.addStretch()
+        
+        # Pestaña Restricciones: Restricciones Curso-Salón
+        self.restricciones_label = QLabel("Restricciones Curso → Salón")
+        self.restricciones_label.setStyleSheet("font-weight: bold;")
+
+        self.restricciones_output = QTextEdit()
+        self.restricciones_output.setPlaceholderText("Aquí se mostrarán las restricciones agregadas...")
+        self.restricciones_output.setReadOnly(True)
+        self.restricciones_output.setMaximumHeight(80)
+
+        self.restricciones_data = []  # Lista de tuplas (codigo_curso, nombre_salon)
+
+        # # Inputs para seleccionar restricción
+        # self.curso_input = QLineEdit()
+        # self.curso_input.setPlaceholderText("Código del curso (ej: C001)")
+        # self.curso_input.setMaximumWidth(150)
+
+        # self.salon_input = QLineEdit()
+        # self.salon_input.setPlaceholderText("Nombre del salón (ej: Edificio G - Aula 103)")
+        # self.salon_input.setMaximumWidth(250)
+
+        # self.agregar_restriccion_btn = QPushButton("Agregar Restricción")
+        # self.agregar_restriccion_btn.setMaximumWidth(150)
+        # self.agregar_restriccion_btn.clicked.connect(self.agregar_restriccion_manual)
+
+        # restricciones_layout = QHBoxLayout()
+        # restricciones_layout.addWidget(self.curso_input)
+        # restricciones_layout.addWidget(self.salon_input)
+        # restricciones_layout.addWidget(self.agregar_restriccion_btn)
+        
+        #
+        # Botón para abrir selector de restricción
+        self.restricciones_data = []  # Lista de tuplas (codigo_curso, nombre_salon)
+
+        self.restricciones_label = QLabel("Restricciones Curso → Salón")
+        self.restricciones_label.setStyleSheet("font-weight: bold;")
+
+        self.restricciones_output = QTextEdit()
+        self.restricciones_output.setPlaceholderText("Aquí se mostrarán las restricciones agregadas...")
+        self.restricciones_output.setReadOnly(True)
+        self.restricciones_output.setMaximumHeight(80)
+
+        self.abrir_dialogo_btn = QPushButton("Agregar Restricción (Curso-Salón)")
+        self.abrir_dialogo_btn.setMaximumWidth(200)
+        self.abrir_dialogo_btn.clicked.connect(self.abrir_dialogo_restriccion)
+
+        layout.addWidget(self.restricciones_label)
+        layout.addWidget(self.abrir_dialogo_btn)
+        layout.addWidget(self.restricciones_output)
+
+        #
+
+        # layout.addWidget(self.restricciones_label)
+        # layout.addLayout(restricciones_layout)
+        # layout.addWidget(self.restricciones_output)
 
         return layout
 
@@ -158,7 +298,7 @@ class MainApp(QWidget):
     def init_results_tab(self):
         layout = QVBoxLayout()
 
-        # ScrollArea para que la tabla se vea bien aunque sea grande
+        # ScrollArea para que la tabla se deslice cuando sea muy grande
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
@@ -212,7 +352,6 @@ class MainApp(QWidget):
             content_layout.addWidget(label)
             content_layout.addWidget(img_label)
             self.graph_labels.append((img_label, path))
-
 
         content.setLayout(content_layout)
         scroll.setWidget(content)
@@ -272,8 +411,30 @@ class MainApp(QWidget):
 
         except Exception as e:
             self.console_output.append(f"[ERROR] Error al ejecutar el algoritmo: {e}")
-
             
+    def abrir_dialogo_restriccion(self):
+        from interface.dialogs.restriccion_dialog import RestriccionCursoSalonDialog  # o donde lo pongas
+
+        dialog = RestriccionCursoSalonDialog(self)
+        if dialog.exec_():
+            curso, salon = dialog.get_result()
+            self.restricciones_data.append((curso, salon))
+            self.restricciones_output.append(f"{curso} → {salon}")
+            
+    # AGREGADO
+    def agregar_restriccion_manual(self):
+        codigo = self.curso_input.text().strip()
+        salon = self.salon_input.text().strip()
+
+        if codigo and salon:
+            self.restricciones_data.append((codigo, salon))
+            self.restricciones_output.append(f"{codigo} → {salon}")
+            self.curso_input.clear()
+            self.salon_input.clear()
+        else:
+            self.console_output.append("[ERROR] Ambos campos son obligatorios para agregar la restricción.")
+    # FIN AGREGADO
+
     def load_schedule_csv_to_table(self):
         path = os.path.abspath("exports/csv/mejor_horario.csv")
         if not os.path.exists(path):
@@ -299,8 +460,6 @@ class MainApp(QWidget):
 
         self.tabs.setCurrentWidget(self.results_tab)
 
-
-    
     def load_pdf_result(self):
         path = os.path.abspath("exports/pdf/mejor_horario.pdf")
         webbrowser.open_new(f"file:///{path}")

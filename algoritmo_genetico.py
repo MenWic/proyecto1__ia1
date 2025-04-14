@@ -6,15 +6,17 @@ from poblacion import Poblacion
 # y centraliza la lógica de evolución de poblaciones.
 
 class AlgoritmoGenetico:
-    def __init__(self, cursos, salones, docentes, relacion_docente_curso, horarios_disponibles):
+    def __init__(self, cursos, salones, docentes, relacion_docente_curso, horarios_disponibles, asignaciones_fijas=None):
         self.cursos = cursos
         self.salones = salones
         self.docentes = docentes
         self.relacion_docente_curso = relacion_docente_curso
         self.horarios_disponibles = horarios_disponibles
+        self.asignaciones_fijas = asignaciones_fijas or {}
+
 
     def evolucionar(self, generaciones=5, tamano_poblacion=40, elitismo=2):
-        poblacion = Poblacion(tamano_poblacion, self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles)
+        poblacion = Poblacion(tamano_poblacion, self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles, asignaciones_fijas=self.asignaciones_fijas)
         poblacion.inicializar()
 
         for generacion in range(generaciones):
