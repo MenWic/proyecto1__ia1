@@ -9,8 +9,7 @@ from poblacion import Poblacion
 from time import time
 import tracemalloc
 
-def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones,
-                       poblacion_size=10, generaciones_max=250, aptitud_objetivo=125):
+def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones, poblacion_size=10, generaciones_max=250, aptitud_objetivo=125, modo=1):
     logs = []
     cursos = cargar_cursos(path_cursos)
     docentes = cargar_docentes(path_docentes)
@@ -43,7 +42,14 @@ def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones,
         generacion_final = gen + 1
         conflictos = mejor.calcular_conflictos()
         conflicts_history.append(conflictos)
-        if mejor.aptitud >= aptitud_objetivo:
+
+        if modo == 1 and mejor.aptitud >= aptitud_objetivo:
+            logs.append(f"[OK] Aptitud objetivo alcanzada en la generación {gen + 1}")
+            break
+        elif modo == 2 and gen + 1 >= generaciones_max:
+            logs.append("[OK] Límite de generaciones alcanzado.")
+            break
+        elif modo == 3 and mejor.aptitud >= aptitud_objetivo:
             logs.append(f"[OK] Aptitud objetivo alcanzada en la generación {gen + 1}")
             break
 

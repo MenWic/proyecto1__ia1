@@ -6,11 +6,14 @@ import webbrowser
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel,
     QFileDialog, QLineEdit, QHBoxLayout, QTextEdit, QTabWidget, QFormLayout,
-    QScrollArea, QTableWidget, QTableWidgetItem, QHeaderView
+    QScrollArea, QTableWidget, QTableWidgetItem, QHeaderView,
+    QRadioButton, QButtonGroup, QGroupBox
 )
+
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+
 from interface.runner import ejecutar_algoritmo
 
 class MainApp(QWidget):
@@ -96,15 +99,48 @@ class MainApp(QWidget):
         self.fitness_input.setMaximumWidth(100)
         form_layout.addRow("Aptitud objetivo:", self.fitness_input)
 
+        # self.start_button = QPushButton("Ejecutar Algoritmo")
+        # self.start_button.setMaximumWidth(150)
+        # self.start_button.clicked.connect(self.run_algorithm)
+
+        # # Botón alineado a la izquierda con un poco de margen
+        # button_row = QHBoxLayout()
+        # button_row.setContentsMargins(130, 15, 0, 0)  # margen izquierdo y arriba
+        # button_row.setAlignment(Qt.AlignLeft)
+        # button_row.addWidget(self.start_button)
+        
+        # Radio buttons para elegir modo
+        self.option_group = QButtonGroup()
+
+        radio_box = QGroupBox("Modo de Ejecución")
+        radio_layout = QVBoxLayout()
+
+        self.option1 = QRadioButton("1. Aptitud objetivo (default)")
+        self.option1.setChecked(True)  # opción por defecto
+        self.option2 = QRadioButton("2. Número máximo de generaciones definida (A menos que alcance antes la aptitud objetivo)")
+        self.option3 = QRadioButton("3. Nivel de aptitud definido (Siempre que no sobrepase max. de generaciones)")
+
+        self.option_group.addButton(self.option1, 1)
+        self.option_group.addButton(self.option2, 2)
+        self.option_group.addButton(self.option3, 3)
+
+        radio_layout.addWidget(self.option1)
+        radio_layout.addWidget(self.option2)
+        radio_layout.addWidget(self.option3)
+
+        radio_box.setLayout(radio_layout)
+        layout.addWidget(radio_box)
+
+        # Botón
         self.start_button = QPushButton("Ejecutar Algoritmo")
         self.start_button.setMaximumWidth(150)
         self.start_button.clicked.connect(self.run_algorithm)
 
-        # Botón alineado a la izquierda con un poco de margen
         button_row = QHBoxLayout()
-        button_row.setContentsMargins(130, 15, 0, 0)  # margen izquierdo y arriba
+        button_row.setContentsMargins(130, 15, 0, 0)
         button_row.setAlignment(Qt.AlignLeft)
         button_row.addWidget(self.start_button)
+
 
         layout.addLayout(form_layout)
         layout.addLayout(button_row)
@@ -152,6 +188,16 @@ class MainApp(QWidget):
         content = QWidget()
         content_layout = QVBoxLayout()
 
+        # Resumen del JSON
+        self.json_summary_label = QLabel("Resumen del Resultado Final")
+        self.json_summary_output = QTextEdit()
+        self.json_summary_output.setReadOnly(True)
+        self.json_summary_output.setMaximumHeight(180)
+
+        content_layout.addWidget(self.json_summary_label)
+        content_layout.addWidget(self.json_summary_output)
+        
+        # Gráficas
         self.graph_paths = [
             ("Evolución de Aptitud", "exports/graficas/evolucion_aptitud.png"),
             ("Conflictos por Generación", "exports/graficas/conflictos_por_generacion.png"),
@@ -167,16 +213,18 @@ class MainApp(QWidget):
             content_layout.addWidget(img_label)
             self.graph_labels.append((img_label, path))
 
+
         content.setLayout(content_layout)
         scroll.setWidget(content)
         layout.addWidget(scroll)
-        return layout
+        return layout        
 
     def run_algorithm(self):
         cursos = self.csv_labels["Cursos"].text()
         docentes = self.csv_labels["Docentes"].text()
         relacion = self.csv_labels["Relación Docente-Curso"].text()
         salones = self.csv_labels["Salones"].text()
+        
         try:
             poblacion = int(self.population_input.text())
             generaciones = int(self.generations_input.text())
@@ -186,21 +234,45 @@ class MainApp(QWidget):
             return
 
         self.console_output.append("[INFO] Ejecutando el algoritmo genético...\n")
-
+        
         try:
+            modo = self.option_group.checkedId()
+
             logs, resultados = ejecutar_algoritmo(
                 cursos, docentes, relacion, salones,
                 poblacion_size=poblacion,
                 generaciones_max=generaciones,
-                aptitud_objetivo=aptitud
+                aptitud_objetivo=aptitud,
+                modo=modo
             )
+
             for log in logs:
                 self.console_output.append(log)
+
+            # Mostrar en consola
+            self.console_output.append("\n[Resumen del Resultado Final]")
+            for clave, valor in resultados.items():
+                self.console_output.append(f"- {clave.replace('_', ' ').capitalize()}: {valor}")
+
+            # Mostrar en sección Reportes
+            summary_text = "[Resumen del Resultado Final]\n"
+            for clave, valor in resultados.items():
+                if isinstance(valor, dict):
+                    summary_text += f"- {clave.replace('_', ' ').capitalize()}:\n"
+                    for subkey, subval in valor.items():
+                        summary_text += f"    > {subkey}: {subval}\n"
+                else:
+                    summary_text += f"- {clave.replace('_', ' ').capitalize()}: {valor}\n"
+            self.json_summary_output.setPlainText(summary_text)
+
+            # Cargar resultados
             self.load_schedule_csv_to_table()
             self.load_pdf_result()
             self.load_report_graphs()
+
         except Exception as e:
             self.console_output.append(f"[ERROR] Error al ejecutar el algoritmo: {e}")
+
             
     def load_schedule_csv_to_table(self):
         path = os.path.abspath("exports/csv/mejor_horario.csv")
