@@ -3,21 +3,28 @@ from individuo import Individuo
 import random
 
 class Poblacion:
-    def __init__(self, size: int, cursos, salones, docentes, relacion_docente_curso, horarios_disponibles):
+    def inicializar(self):
+        for individuo in self.individuos:
+            individuo.calcular_aptitud()
+        self.mejor_individuo = max(self.individuos, key=lambda ind: ind.aptitud)
+        self.mejor_aptitud_historica = self.mejor_individuo.aptitud
+        
+    def __init__(self, size: int, cursos, salones, docentes, relacion_docente_curso, horarios_disponibles, imprimir_diagnostico=True):
         self.size = size
         self.cursos = cursos
         self.salones = salones
         self.docentes = docentes
         self.relacion_docente_curso = relacion_docente_curso
         self.horarios_disponibles = horarios_disponibles
+        self.imprimir_diagnostico = imprimir_diagnostico
         self.mejores_aptitudes: list[float] = []
         self.individuos: list[Individuo] = [
-            Individuo(cursos, salones, docentes, relacion_docente_curso, horarios_disponibles)
+            Individuo(cursos, salones, docentes, relacion_docente_curso, horarios_disponibles, imprimir_diagnostico)
             for _ in range(size)
         ]
-        self.mejor_individuo = max(self.individuos, key=lambda ind: ind.aptitud)
+        self.mejor_individuo = None
         self.sin_mejora_consecutiva = 0
-        self.mejor_aptitud_historica = self.mejor_individuo.aptitud
+        self.mejor_aptitud_historica = 0
 
     def seleccionar_padres(self, torneo_base=3) -> tuple[Individuo, Individuo]:
         torneo_size = torneo_base + min(3, self.sin_mejora_consecutiva)
@@ -49,7 +56,7 @@ class Poblacion:
             if self.sin_mejora_consecutiva >= 10:
                 cantidad_reemplazo = int(0.3 * self.size)
                 nuevos = [
-                    Individuo(self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles)
+                    Individuo(self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles, self.imprimir_diagnostico)
                     for _ in range(cantidad_reemplazo)
                 ]
                 nueva_generacion[-cantidad_reemplazo:] = nuevos
@@ -67,7 +74,7 @@ class Poblacion:
 
 
     def cruzar(self, padre1: Individuo, padre2: Individuo) -> Individuo:
-        hijo = Individuo(self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles)
+        hijo = Individuo(self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles, self.imprimir_diagnostico)
         hijo.asignaciones.clear()
 
         horario_docente = {}

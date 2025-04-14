@@ -1,0 +1,21 @@
+{
+    "generacion_final": 48,
+    "aptitud_final": 126,
+    "conflictos_finales": 0,
+    "duracion_segundos": 11.02,
+    "continuidad_global": 52.0,
+    "continuidad_por_semestre": {
+        "2\u00b0 semestre - Ingenier\u00eda Civil": 60.0,
+        "3\u00b0 semestre - Ingenier\u00eda Civil": 60.0,
+        "4\u00b0 semestre - Ingenier\u00eda Civil": 60.0,
+        "5\u00b0 semestre - Ingenier\u00eda Civil": 40.0,
+        "6\u00b0 semestre - Ingenier\u00eda Civil": 60.0,
+        "7\u00b0 semestre - Ingenier\u00eda Civil": 80.0,
+        "8\u00b0 semestre - Ingenier\u00eda Civil": 60.0,
+        "9\u00b0 semestre - Ingenier\u00eda Civil": 0.0,
+        "10\u00b0 semestre - Ingenier\u00eda Civil": 60.0,
+        "1\u00b0 semestre - Ingenier\u00eda Civil": 40.0
+    },
+    "memoria_actual_MB": 0.02,
+    "memoria_pico_MB": 0.04
+}
