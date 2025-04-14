@@ -10,5 +10,5 @@ def graficar_aptitudes(nombre_archivo: str, mejores_aptitudes: list[float]):
     plt.grid(True)
     plt.tight_layout()
     plt.savefig("exports/graficas/evolucion_aptitud.png")
-    plt.show()
-    print(f"Horario exportado exitosamente como PNG: {nombre_archivo}")
+    plt.close()
+    print(f"Grafica de Evolución de Aptitud exportada exitosamente como PNG: {nombre_archivo}")

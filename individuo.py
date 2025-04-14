@@ -132,7 +132,83 @@ class Individuo:
         
         if self.imprimir_diagnostico:
             print("\n[Diagnóstico del individuo]")
+            
             for k, v in conteo_conflictos.items():
                 print(f"- Conflictos {k.replace('_', ' ')}: {v}")
             print(f"- Bonificaciones por continuidad: {bonificaciones}")
             print(f"- Aptitud final: {self.aptitud}")
+
+    def calcular_conflictos(self) -> int:
+        conflictos = 0
+        horario_docente = {}
+        horario_semestre = {}
+
+        for curso in self.cursos:
+            cod = curso.codigo
+            asignacion = self.asignaciones.get(cod)
+
+            if not asignacion:
+                conflictos += 5
+                continue
+
+            salon, horario, docente = asignacion
+
+            if docente is None:
+                conflictos += 5
+                continue
+
+            if (docente.registro, horario) in horario_docente:
+                conflictos += 3
+            else:
+                horario_docente[(docente.registro, horario)] = cod
+
+            if not (docente.hora_entrada.strftime("%H:%M") <= horario <= docente.hora_salida.strftime("%H:%M")):
+                conflictos += 3
+
+            if curso.tipo == "obligatorio":
+                key = (curso.carrera, curso.semestre, horario)
+                if key in horario_semestre:
+                    conflictos += 4
+                else:
+                    horario_semestre[key] = cod
+
+        return conflictos
+    
+    def medir_porcentaje_continuidad_por_semestre(self) -> tuple[dict[tuple[int, str], float], float]:
+        """
+        Retorna un diccionario con el porcentaje de continuidad por (semestre, carrera)
+        y el porcentaje global total.
+        """
+        from collections import defaultdict
+
+        grupos = defaultdict(list)  # (carrera, semestre) -> list(horarios)
+
+        # Agrupar todos los horarios por semestre y carrera
+        for curso in self.cursos:
+            cod = curso.codigo
+            _, horario, _ = self.asignaciones.get(cod, (None, None, None))
+            if horario:
+                grupos[(curso.semestre, curso.carrera)].append(horario)
+
+        horario_a_minuto = lambda h: int(h[:2]) * 60 + int(h[3:])
+        porcentaje_por_semestre = {}
+        total_cursos = 0
+        total_consecutivos = 0
+
+        for key, lista_horas in grupos.items():
+            total = len(lista_horas)
+            total_cursos += total
+            horas = sorted([horario_a_minuto(h) for h in lista_horas])
+            consecutivos = 0
+            for i in range(1, len(horas)):
+                if horas[i] - horas[i - 1] == 50:
+                    consecutivos += 1
+            total_consecutivos += consecutivos
+            porcentaje = (consecutivos / total) * 100 if total > 0 else 0
+            clave_str = f"{key[0]}° semestre - {key[1]}"
+            porcentaje_por_semestre[clave_str] = round(porcentaje, 2)
+
+
+        porcentaje_global = (total_consecutivos / total_cursos) * 100 if total_cursos > 0 else 0
+        return porcentaje_por_semestre, round(porcentaje_global, 2)
+

@@ -1,6 +1,9 @@
 
 def main():
+    import tracemalloc
     from time import time
+    from pprint import pprint
+
     from utils.cargador_csv import (
         cargar_cursos,
         cargar_docentes,
@@ -10,6 +13,10 @@ def main():
     from utils.exportador_csv import exportar_horario_csv
     from utils.exportador_pdf import exportar_horario_pdf
     from utils.grafica_aptitud import graficar_aptitudes
+    from utils.grafica_conflictos import graficar_conflictos_por_generacion
+    from utils.exportador_resultado import exportar_resultado_final
+    from utils.grafica_continuidad import graficar_continuidad_por_semestre
+
     from poblacion import Poblacion
 
     HORARIOS_DISPONIBLES = [
@@ -22,6 +29,7 @@ def main():
     salones = cargar_salones("data/salon.csv")
     relacion = cargar_relacion_docente_curso("data/docente_curso.csv")
     generacion_final = 0
+    conflicts_history = []
 
     
     poblacion = Poblacion(
@@ -81,17 +89,16 @@ def main():
     poblacion.inicializar()
     
     print("\n=> Evolución del algoritmo genético:\n")
+    tracemalloc.start() # COMENTAR (MEJORAR TIEMPO DE EJECUCION)
     start_time = time()
 
     for gen in range(max_generaciones):
         poblacion.evolucionar(generaciones=1)
         mejor = poblacion.mejor_individuo
         print(f"Generación {gen + 1}: Mejor aptitud = {mejor.aptitud:.2f}")
-        generacion_final = gen + 1
-        
-        # if mejor.aptitud >= aptitud_objetivo:
-        #     print(f"\nAptitud objetivo alcanzada en la generación {gen + 1}")
-        #     break
+        generacion_final = gen + 1 # Guardar numero de ultima generacion
+        conflictos_generacion = mejor.calcular_conflictos() # Hallar los conflictos del mejor individuo de la generacion actual
+        conflicts_history.append(conflictos_generacion) # Guardar los conflictos del mejor individuo de la generacion actual
         
         if mejor.aptitud >= aptitud_objetivo: # aptitud_objetivo = o conflictos aprox.
             print(f"\nAptitud objetivo alcanzada en la generación {gen + 1}")
@@ -108,7 +115,10 @@ def main():
                 print(f"\n⚠ No se encontró un individuo sin conflictos (≥125) en: {max_generaciones} generaciones (indicadas). Se muestra el último individuo encontrado (mejor posible por los limites).")
 
     end_time = time()
-    duracion = end_time - start_time
+    duracion = end_time - start_time # Tiempo de ejecucion
+    current_mem, peak_mem = tracemalloc.get_traced_memory() # COMENTAR (MEJORAR TIEMPO DE EJECUCION)
+    tracemalloc.stop() # COMENTAR (MEJORAR TIEMPO DE EJECUCION)
+
 
     print("\n=> Asignaciones del mejor individuo final:")
     for codigo, (salon, horario, docente) in poblacion.mejor_individuo.asignaciones.items():
@@ -118,6 +128,19 @@ def main():
     print("\n[Diagnóstico final del mejor individuo]")
     poblacion.mejor_individuo.imprimir_diagnostico = True
     poblacion.mejor_individuo.calcular_aptitud()
+    continuidad_por_semestre, continuidad_global = poblacion.mejor_individuo.medir_porcentaje_continuidad_por_semestre()
+
+    
+    resultado_final = {
+        "generacion_final": generacion_final,
+        "aptitud_final": poblacion.mejor_individuo.aptitud,
+        "conflictos_finales": poblacion.mejor_individuo.calcular_conflictos(),
+        "duracion_segundos": round(duracion, 2),
+        "continuidad_global": continuidad_global,
+        "continuidad_por_semestre": continuidad_por_semestre,
+        "memoria_actual_MB": round(current_mem / (1024 * 1024), 2), # COMENTAR (MEJORAR TIEMPO DE EJECUCION)
+        "memoria_pico_MB": round(peak_mem / (1024 * 1024), 2) # COMENTAR (MEJORAR TIEMPO DE EJECUCION)
+    }
 
     print("\n=> Exportaciones del Mejor Horario final")
     exportar_horario_csv("exports/csv/mejor_horario.csv", poblacion.mejor_individuo, cursos)
@@ -125,6 +148,15 @@ def main():
 
     print("\n=> Exportación de Grafica de Aptitud final")
     graficar_aptitudes("exports/graficas/evolucion_aptitud.png", poblacion.mejores_aptitudes)
+    
+    print("\n=> Exportación de Gráfica de Conflictos por Generación")
+    graficar_conflictos_por_generacion('exports/graficas/conflictos_por_generacion.png', conflicts_history)
+    
+    print("\n=> Exportación de Resumen Final (JSON)")
+    exportar_resultado_final("exports/resultados/resumen_resultado.json", resultado_final)
+    
+    print("\n=> Exportación de Gráfica de Continuidad por Semestre")
+    graficar_continuidad_por_semestre("exports/graficas/continuidad_por_semestre.png", continuidad_por_semestre, continuidad_global)
 
     print(f"\nDuración total del algoritmo: {duracion:.2f} segundos")
 
