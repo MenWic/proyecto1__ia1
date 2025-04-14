@@ -18,7 +18,10 @@ class Individuo:
         self.aptitud: float = 0.0
 
         self.generar_asignacion_prioritaria()
-        # self.calcular_aptitud()
+        
+        # GUI
+        self.diagnostico_conflictos = {}
+        self.diagnostico_bonos = 0
 
     def generar_asignacion_prioritaria(self):
         ocupacion_docente = defaultdict(set)  # (registro_docente) -> set(horarios)
@@ -130,6 +133,11 @@ class Individuo:
         base = 100 - conflictos + bonificaciones
         self.aptitud = max(0.1, base)
         
+        # GUI
+        self.diagnostico_conflictos = conteo_conflictos
+        self.diagnostico_bonos = bonificaciones
+
+        # Mostrar prints de diagnostico
         if self.imprimir_diagnostico:
             print("\n[Diagnóstico del individuo]")
             
@@ -137,6 +145,7 @@ class Individuo:
                 print(f"- Conflictos {k.replace('_', ' ')}: {v}")
             print(f"- Bonificaciones por continuidad: {bonificaciones}")
             print(f"- Aptitud final: {self.aptitud}")
+        
 
     def calcular_conflictos(self) -> int:
         conflictos = 0
