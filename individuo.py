@@ -6,18 +6,19 @@ import random
 from collections import defaultdict
 
 class Individuo:
-    def __init__(self, cursos: list[Curso], salones: list[Salon], docentes: list[Docente], relacion_docente_curso: dict[str, list[str]], horarios_disponibles: list[str]):
+    def __init__(self, cursos: list[Curso], salones: list[Salon], docentes: list[Docente], relacion_docente_curso: dict[str, list[str]], horarios_disponibles: list[str], imprimir_diagnostico: bool):
         self.cursos = cursos
         self.salones = salones
         self.docentes = docentes
         self.relacion_docente_curso = relacion_docente_curso
         self.horarios_disponibles = horarios_disponibles
+        self.imprimir_diagnostico = imprimir_diagnostico
 
         self.asignaciones: dict[str, tuple[Salon, str, Docente]] = {}
         self.aptitud: float = 0.0
 
         self.generar_asignacion_prioritaria()
-        self.calcular_aptitud()
+        # self.calcular_aptitud()
 
     def generar_asignacion_prioritaria(self):
         ocupacion_docente = defaultdict(set)  # (registro_docente) -> set(horarios)
@@ -128,9 +129,10 @@ class Individuo:
 
         base = 100 - conflictos + bonificaciones
         self.aptitud = max(0.1, base)
-
-        print("\n[Diagnóstico del individuo]")
-        for k, v in conteo_conflictos.items():
-            print(f"- Conflictos {k.replace('_', ' ')}: {v}")
-        print(f"- Bonificaciones por continuidad: {bonificaciones}")
-        print(f"- Aptitud final: {self.aptitud}")
+        
+        if self.imprimir_diagnostico:
+            print("\n[Diagnóstico del individuo]")
+            for k, v in conteo_conflictos.items():
+                print(f"- Conflictos {k.replace('_', ' ')}: {v}")
+            print(f"- Bonificaciones por continuidad: {bonificaciones}")
+            print(f"- Aptitud final: {self.aptitud}")
