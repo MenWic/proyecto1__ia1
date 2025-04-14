@@ -9,14 +9,25 @@ from poblacion import Poblacion
 from time import time
 import tracemalloc
 
-def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones, poblacion_size=10, generaciones_max=250, aptitud_objetivo=125, modo=1, restricciones: dict[str, str] = None):
-    logs = []
+def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones, poblacion_size=10, generaciones_max=250, aptitud_objetivo=125, modo=1, restricciones: dict[str, str] = None):    
+    # Cargar los datos
+    logs = []  # Asegúrate de que logs esté definido antes de usarlo
     cursos = cargar_cursos(path_cursos)
     docentes = cargar_docentes(path_docentes)
     salones = cargar_salones(path_salones)
     relacion = cargar_relacion_docente_curso(path_relacion)
     horarios = ["13:40", "14:30", "15:20", "16:10", "17:00", "17:50", "18:40", "19:30", "20:20"]
-
+    
+    # Verificar las restricciones recibidas
+    if restricciones:
+        logs.append(f"Restricciones manuales pasadas: {restricciones}")
+    else:
+        logs.append("No se han pasado restricciones manuales.")
+    
+    # Conversión de lista (Asi se usa en GUI) a dict (Asi se espera en CLI)
+    restricciones_dict = dict(restricciones) if restricciones else {}
+        
+    # Población
     poblacion = Poblacion(
         size=poblacion_size,
         cursos=cursos,
@@ -25,7 +36,7 @@ def ejecutar_algoritmo(path_cursos, path_docentes, path_relacion, path_salones, 
         relacion_docente_curso=relacion,
         horarios_disponibles=horarios,
         imprimir_diagnostico=False,
-        asignaciones_fijas=restricciones or {}
+        asignaciones_fijas=restricciones_dict   # Aquí pasamos las restricciones a Poblacion
     )
 
     logs.append("[INFO] Población inicializada.")

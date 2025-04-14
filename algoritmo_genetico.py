@@ -14,9 +14,16 @@ class AlgoritmoGenetico:
         self.horarios_disponibles = horarios_disponibles
         self.asignaciones_fijas = asignaciones_fijas or {}
 
-
     def evolucionar(self, generaciones=5, tamano_poblacion=40, elitismo=2):
-        poblacion = Poblacion(tamano_poblacion, self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles, asignaciones_fijas=self.asignaciones_fijas)
+        poblacion = Poblacion(
+            tamano_poblacion, 
+            self.cursos, 
+            self.salones, 
+            self.docentes, 
+            self.relacion_docente_curso, 
+            self.horarios_disponibles, 
+            asignaciones_fijas=self.asignaciones_fijas
+        )
         poblacion.inicializar()
 
         for generacion in range(generaciones):
@@ -36,5 +43,5 @@ class AlgoritmoGenetico:
             poblacion.individuos = nueva_generacion
             mejor = max(poblacion.individuos, key=lambda ind: ind.aptitud)
             print(f"Generación {generacion + 1}: Mejor aptitud = {mejor.aptitud:.2f}")
-
+        
         return max(poblacion.individuos, key=lambda ind: ind.aptitud)

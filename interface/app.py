@@ -363,7 +363,7 @@ class MainApp(QWidget):
         docentes = self.csv_labels["Docentes"].text()
         relacion = self.csv_labels["Relación Docente-Curso"].text()
         salones = self.csv_labels["Salones"].text()
-        
+    
         try:
             poblacion = int(self.population_input.text())
             generaciones = int(self.generations_input.text())
@@ -376,13 +376,17 @@ class MainApp(QWidget):
         
         try:
             modo = self.option_group.checkedId()
+            
+            # Aseguramos que las restricciones se pasen correctamente
+            print(f"Pasando restricciones al algoritmo: {self.restricciones_data}")  # Print para depuración
 
             logs, resultados = ejecutar_algoritmo(
                 cursos, docentes, relacion, salones,
                 poblacion_size=poblacion,
                 generaciones_max=generaciones,
                 aptitud_objetivo=aptitud,
-                modo=modo
+                modo=modo,
+                restricciones=self.restricciones_data  # Aquí pasamos las restricciones
             )
 
             for log in logs:
@@ -390,6 +394,7 @@ class MainApp(QWidget):
 
             # Mostrar en consola
             self.console_output.append("\n[Resumen del Resultado Final]")
+            
             for clave, valor in resultados.items():
                 self.console_output.append(f"- {clave.replace('_', ' ').capitalize()}: {valor}")
 
@@ -420,6 +425,7 @@ class MainApp(QWidget):
             curso, salon = dialog.get_result()
             self.restricciones_data.append((curso, salon))
             self.restricciones_output.append(f"{curso} → {salon}")
+            print(f"Restricción agregada: {curso} → {salon}")  # Print para depurar
             
     # AGREGADO
     def agregar_restriccion_manual(self):

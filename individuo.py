@@ -5,27 +5,8 @@ from modelos.salon import Salon
 import random
 from collections import defaultdict
 
-#class Individuo:
-    # def __init__(self, cursos: list[Curso], salones: list[Salon], docentes: list[Docente], relacion_docente_curso: dict[str, list[str]], horarios_disponibles: list[str], imprimir_diagnostico: bool, asignaciones_fijas=None):
-    #     self.cursos = cursos
-    #     self.salones = salones
-    #     self.docentes = docentes
-    #     self.relacion_docente_curso = relacion_docente_curso
-    #     self.horarios_disponibles = horarios_disponibles
-    #     self.imprimir_diagnostico = imprimir_diagnostico
-    #     self.asignaciones_fijas = asignaciones_fijas or {}
-
-    #     self.asignaciones: dict[str, tuple[Salon, str, Docente]] = {}
-    #     self.aptitud: float = 0.0
-
-    #     self.generar_asignacion_prioritaria()
-        
-    #     # GUI
-    #     self.diagnostico_conflictos = {}
-    #     self.diagnostico_bonos = 0
-    
 class Individuo:
-    def __init__(self, cursos: list[Curso], salones: list[Salon], docentes: list[Docente], relacion_docente_curso: dict[str, list[str]], horarios_disponibles: list[str], imprimir_diagnostico: bool, asignaciones_fijas: dict[str, str] = None):
+    def __init__(self, cursos, salones, docentes, relacion_docente_curso, horarios_disponibles, imprimir_diagnostico, asignaciones_fijas=None):
         self.cursos = cursos
         self.salones = salones
         self.docentes = docentes
@@ -34,109 +15,72 @@ class Individuo:
         self.imprimir_diagnostico = imprimir_diagnostico
         self.asignaciones_fijas = asignaciones_fijas or {}
 
-        self.asignaciones: dict[str, tuple[Salon, str, Docente]] = {}
-        self.aptitud: float = 0.0
+        self.asignaciones = {}
+        self.aptitud = 0.0
 
-        self.generar_asignacion_prioritaria()
+        self.generar_asignacion_prioritaria()  # Este método debe respetar las restricciones
 
         self.diagnostico_conflictos = {}
         self.diagnostico_bonos = 0
-
-    # def generar_asignacion_prioritaria(self):
-    #     ocupacion_docente = defaultdict(set)  # (registro_docente) -> set(horarios)
-    #     cursos_prioritarios = []
-
-    #     # Asignar los cursos fijos primero
-    #     for curso in self.cursos:
-    #         if curso.codigo in self.asignaciones_fijas:
-    #             salon_fijo = next((s for s in self.salones if s.nombre == self.asignaciones_fijas[curso.codigo]), None)
-    #             if salon_fijo:
-    #                 self.asignaciones[curso.codigo] = (salon_fijo, random.choice(self.horarios_disponibles), None)
-    #     #
-
-    #     for curso in self.cursos:
-    #         docentes_posibles = self.relacion_docente_curso.get(curso.codigo, [])
-    #         prioridad = len(docentes_posibles)
-    #         cursos_prioritarios.append((prioridad, curso.tipo, random.random(), curso))
-
-    #     cursos_ordenados = sorted(cursos_prioritarios, key=lambda x: (x[0], 0 if x[1] == "obligatorio" else 1, x[2]))
-
-    #     horarios_disponibles = list(self.horarios_disponibles)
-    #     random.shuffle(horarios_disponibles)
-
-    #     for _, _, _, curso in cursos_ordenados:
-    #         docentes_validos = [
-    #             d for d in self.docentes
-    #             if curso.codigo in self.relacion_docente_curso.get(d.registro, [])
-    #         ]
-
-    #         random.shuffle(docentes_validos)
-    #         horario_asignado = None
-    #         docente_asignado = None
-
-    #         for d in docentes_validos:
-    #             horarios_libres = [
-    #                 h for h in horarios_disponibles
-    #                 if d.hora_entrada.strftime("%H:%M") <= h <= d.hora_salida.strftime("%H:%M")
-    #                 and h not in ocupacion_docente[d.registro]
-    #             ]
-
-    #             if horarios_libres:
-    #                 horario_asignado = sorted(horarios_libres)[0]  # más temprano disponible
-    #                 docente_asignado = d
-    #                 ocupacion_docente[d.registro].add(horario_asignado)
-    #                 break
-
-    #         salon = random.choice(self.salones)
-    #         if docente_asignado and horario_asignado:
-    #             self.asignaciones[curso.codigo] = (salon, horario_asignado, docente_asignado)
-    #         else:
-    #             self.asignaciones[curso.codigo] = (salon, random.choice(self.horarios_disponibles), None)
     
-    #
     def generar_asignacion_prioritaria(self):
         from collections import defaultdict
-        ocupacion_docente = defaultdict(set)  # (registro_docente) -> set(horarios)
+
+        # (registro_docente) -> set(horarios)
+        ocupacion_docente = defaultdict(set)
+
+        # Lista para almacenar los cursos priorizados
         cursos_prioritarios = []
 
         # Asignar los cursos fijos primero (salón fijo si se define en las restricciones)
         for curso in self.cursos:
             if curso.codigo in self.asignaciones_fijas:
+                # Obtener el salón fijo asignado desde las restricciones
                 salon_fijo = next((s for s in self.salones if s.nombre == self.asignaciones_fijas[curso.codigo]), None)
+                
                 if salon_fijo:
-                    # Asignación fija de salón, pero dejamos el horario y docente a definir
+                    # Si encontramos un salón fijo para el curso, asignamos el curso al salón y un horario aleatorio
+                    print(f"Curso {curso.codigo} asignado al salón fijo: {salon_fijo.nombre}")
                     self.asignaciones[curso.codigo] = (salon_fijo, random.choice(self.horarios_disponibles), None)
                 else:
-                    # Si no se encuentra el salón fijo, asignamos aleatoriamente
+                    # Si no se encuentra el salón fijo, asignamos un salón aleatorio
+                    print(f"Curso {curso.codigo} no tiene salón fijo definido, asignación aleatoria.")
                     self.asignaciones[curso.codigo] = (random.choice(self.salones), random.choice(self.horarios_disponibles), None)
 
-        # Procesamos los cursos restantes
+        # Ahora procesamos los cursos restantes que no están en las restricciones
         for curso in self.cursos:
-            docentes_posibles = self.relacion_docente_curso.get(curso.codigo, [])
-            prioridad = len(docentes_posibles)
-            cursos_prioritarios.append((prioridad, curso.tipo, random.random(), curso))
+            if curso.codigo not in self.asignaciones_fijas:
+                docentes_posibles = self.relacion_docente_curso.get(curso.codigo, [])
+                prioridad = len(docentes_posibles)
+                cursos_prioritarios.append((prioridad, curso.tipo, random.random(), curso))
 
+        # Ordenamos los cursos priorizados
         cursos_ordenados = sorted(cursos_prioritarios, key=lambda x: (x[0], 0 if x[1] == "obligatorio" else 1, x[2]))
 
+        # Aleatorizamos los horarios disponibles
         horarios_disponibles = list(self.horarios_disponibles)
         random.shuffle(horarios_disponibles)
 
-        # Asignamos los cursos restantes
+        # Asignamos los cursos restantes a docentes y salones
         for _, _, _, curso in cursos_ordenados:
             # Verificar si tiene una asignación fija de salón
             salon_fijo = None
             if curso.codigo in self.asignaciones_fijas:
                 salon_nombre_fijo = self.asignaciones_fijas[curso.codigo]
                 salon_fijo = next((s for s in self.salones if s.nombre == salon_nombre_fijo), None)
-            else:
+            
+            # Si no tiene un salón fijo, asignamos uno aleatorio
+            if salon_fijo is None:
                 salon_fijo = random.choice(self.salones)
 
+            # Filtrar los docentes válidos para el curso
             docentes_validos = [
                 d for d in self.docentes
                 if curso.codigo in self.relacion_docente_curso.get(d.registro, [])
             ]
-
+            
             random.shuffle(docentes_validos)
+
             horario_asignado = None
             docente_asignado = None
 
@@ -154,15 +98,17 @@ class Individuo:
                     ocupacion_docente[d.registro].add(horario_asignado)
                     break
 
-            # Si se encontró docente y horario, asignamos el curso
+            # Si encontramos un docente y horario, asignamos el curso
             if docente_asignado and horario_asignado:
+                print(f"Curso {curso.codigo} asignado a Docente {docente_asignado.nombre} en el horario {horario_asignado} en el salón {salon_fijo.nombre}")
                 self.asignaciones[curso.codigo] = (salon_fijo, horario_asignado, docente_asignado)
             else:
-                # Si no se encontró, asignamos un salón y horario aleatorio
+                # Si no se encontró docente y horario, asignamos un salón y horario aleatorio
+                print(f"Curso {curso.codigo} no pudo ser asignado con docente, se asigna a un salón aleatorio con horario aleatorio.")
                 self.asignaciones[curso.codigo] = (salon_fijo, random.choice(self.horarios_disponibles), None)
 
-    
-    #
+
+
 
     def calcular_aptitud(self):
         conflictos = 0
