@@ -1,3 +1,4 @@
+from runner import ejecutar_algoritmo
 
 def main():
     import tracemalloc
@@ -23,6 +24,11 @@ def main():
         "13:40", "14:30", "15:20", "16:10", "17:00",
         "17:50", "18:40", "19:30", "20:20"
     ]
+    
+    restricciones_manuales = {
+        "CIV101": "Edificio G - Aula 103",
+        "CIV102": "Edificio F - Aula 204"
+    }
 
     cursos = cargar_cursos("data/curso.csv")
     docentes = cargar_docentes("data/docente.csv")
@@ -31,7 +37,6 @@ def main():
     generacion_final = 0
     conflicts_history = []
 
-    
     poblacion = Poblacion(
         size=10,
         cursos=cursos,
@@ -39,9 +44,10 @@ def main():
         docentes=docentes,
         relacion_docente_curso=relacion,
         horarios_disponibles=HORARIOS_DISPONIBLES,
-        imprimir_diagnostico=False # TRUE = Impresión por defecto
+        imprimir_diagnostico=False,  # TRUE = Impresión por defecto
+        manual_course_classrooms_assignments=restricciones_manuales
     )
-    
+
     print("\nSeleccione el criterio de finalización:")
     print("1. Ejecutar con configuración por defecto (aptitud 125 o hasta 250 generaciones)")
     print("2. Ejecutar hasta alcanzar una aptitud específica")
@@ -54,7 +60,7 @@ def main():
             print("Opción no válida. Por favor, elija una opción válida (1, 2 o 3).\n")
 
     # Parametros de configuracion para el ALgoritmo Genetico
-    aptitud_objetivo = 125 # 125 = Aprox.: 0 conflictos + bonus de continuidad
+    aptitud_objetivo = 125 # 125-130 = Aprox.: 0 conflictos + bonus de continuidad
     max_generaciones = 250 # Limite alto de generaciones/intentos para mejores resultados de aptitud
 
     if opcion == "2":
@@ -108,11 +114,11 @@ def main():
             break
         elif gen == max_generaciones - 1:
             if opcion == "1":
-                print(f"\n⚠ No se alcanzó la aptitud sin conflictos (≥125) en: {max_generaciones} generaciones (limite). Se muestra el último individuo encontrado (mejor posible por los limites).")
+                print(f"\n!> No se alcanzó la aptitud sin conflictos (≥125) en: {max_generaciones} generaciones (limite). Se muestra el último individuo encontrado (mejor posible por los limites).")
             elif opcion == "2":
-                print(f"\n⚠ No se alcanzó la aptitud deseada: ({aptitud_objetivo}) en: {max_generaciones} generaciones. Se muestra el último individuo encontrado (mejor posible por los limites).")
+                print(f"\n!> No se alcanzó la aptitud deseada: ({aptitud_objetivo}) en: {max_generaciones} generaciones. Se muestra el último individuo encontrado (mejor posible por los limites).")
             elif opcion == "3":
-                print(f"\n⚠ No se encontró un individuo sin conflictos (≥125) en: {max_generaciones} generaciones (indicadas). Se muestra el último individuo encontrado (mejor posible por los limites).")
+                print(f"\n!> No se encontró un individuo sin conflictos (≥125) en: {max_generaciones} generaciones (indicadas). Se muestra el último individuo encontrado (mejor posible por los limites).")
 
     end_time = time()
     duracion = end_time - start_time # Tiempo de ejecucion
