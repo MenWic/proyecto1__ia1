@@ -17,15 +17,16 @@ class Poblacion:
         self.relacion_docente_curso = relacion_docente_curso
         self.horarios_disponibles = horarios_disponibles
         self.imprimir_diagnostico = imprimir_diagnostico
+        self.asignaciones_fijas = asignaciones_fijas or {}
+        
         self.mejores_aptitudes: list[float] = []
         self.individuos: list[Individuo] = [
-            Individuo(cursos, salones, docentes, relacion_docente_curso, horarios_disponibles, imprimir_diagnostico)
+            Individuo(cursos, salones, docentes, relacion_docente_curso, horarios_disponibles, imprimir_diagnostico, asignaciones_fijas=self.asignaciones_fijas)
             for _ in range(size)
         ]
         self.mejor_individuo = None
         self.sin_mejora_consecutiva = 0
         self.mejor_aptitud_historica = 0
-        self.asignaciones_fijas = asignaciones_fijas or {}
 
     def seleccionar_padres(self, torneo_base=3) -> tuple[Individuo, Individuo]:
         torneo_size = torneo_base + min(3, self.sin_mejora_consecutiva)
@@ -73,15 +74,24 @@ class Poblacion:
                 self.sin_mejora_consecutiva += 1
                 self.mejores_aptitudes.append(self.mejor_individuo.aptitud)
 
-
     def cruzar(self, padre1: Individuo, padre2: Individuo) -> Individuo:
-        hijo = Individuo(self.cursos, self.salones, self.docentes, self.relacion_docente_curso, self.horarios_disponibles, self.imprimir_diagnostico)
-        hijo.asignaciones.clear()
+        hijo = Individuo(
+            self.cursos, self.salones, self.docentes,
+            self.relacion_docente_curso, self.horarios_disponibles,
+            self.imprimir_diagnostico, asignaciones_fijas=self.asignaciones_fijas
+        )
+        # NO hacer .clear() para conservar las asignaciones fijas generadas
 
         horario_docente = {}
 
         for curso in self.cursos:
             cod = curso.codigo
+
+            # Si el curso ya fue asignado con salón fijo en generar_asignacion_prioritaria(), lo dejamos
+            if cod in self.asignaciones_fijas:
+                continue
+
+            # Si no tiene restricción, intentamos tomar mejor asignación entre los padres
             asign1 = padre1.asignaciones.get(cod)
             asign2 = padre2.asignaciones.get(cod)
 
@@ -101,6 +111,13 @@ class Poblacion:
                 hijo.asignaciones[cod] = mejor
             else:
                 hijo.asignaciones[cod] = self._generar_asignacion_aleatoria(curso, horario_docente)
+
+        # Verificación opcional: asegurarnos de que se cumplan las restricciones de salón
+        for cod, salon_fijo in self.asignaciones_fijas.items():
+            if cod in hijo.asignaciones:
+                salon_asignado = hijo.asignaciones[cod][0].nombre
+                if salon_asignado != salon_fijo:
+                    print(f"!> RESTRICCIÓN NO CUMPLIDA: {cod} debería estar en {salon_fijo}, pero está en {salon_asignado}")
 
         return hijo
 
@@ -122,6 +139,10 @@ class Poblacion:
     def mutar(self, individuo: Individuo):
         curso = random.choice(self.cursos)
         codigo = curso.codigo
+
+        # Si el curso tiene restricción fija, NO se muta
+        if codigo in self.asignaciones_fijas:
+            return  # No tocar asignaciones fijas
 
         nuevo_salon = random.choice(individuo.salones)
         nuevo_horario = random.choice(individuo.horarios_disponibles)
