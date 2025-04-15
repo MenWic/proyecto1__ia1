@@ -117,7 +117,7 @@ class Poblacion:
             if cod in hijo.asignaciones:
                 salon_asignado = hijo.asignaciones[cod][0].nombre
                 if salon_asignado != salon_fijo:
-                    print(f"⚠️ RESTRICCIÓN NO CUMPLIDA: {cod} debería estar en {salon_fijo}, pero está en {salon_asignado}")
+                    print(f"!> RESTRICCIÓN NO CUMPLIDA: {cod} debería estar en {salon_fijo}, pero está en {salon_asignado}")
 
         return hijo
 
@@ -140,7 +140,7 @@ class Poblacion:
         curso = random.choice(self.cursos)
         codigo = curso.codigo
 
-        # 🔒 Si el curso tiene restricción fija, NO se muta
+        # Si el curso tiene restricción fija, NO se muta
         if codigo in self.asignaciones_fijas:
             return  # No tocar asignaciones fijas
 
